@@ -1,0 +1,14 @@
+
+exports.debug = true;
+
+exports.amqp = "amqp://audit:gobrainlife@localhost:5672/brainlife";
+
+exports.elasticsearch = {
+    node: 'http://localhost:9200'
+}
+
+exports.express = {
+    port: 12508,
+    //pubkey: fs.readFileSync('/home/hayashis/git/auth/api/config/auth.pub'),
+}
+

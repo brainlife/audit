@@ -201,7 +201,7 @@ function handleMessage(msg, cb) {
             body.task = tokens[5];
         }
     }
-
+    body.timestamp = new Date(event.timestamp*1000);
 
     if(!type) {
         console.error("unknown exchange/routingKey.. ignoring");
@@ -211,7 +211,7 @@ function handleMessage(msg, cb) {
     let index = "audit."+exchange+"."+type;
     console.log(index);
     console.dir(body);
-    es.index({ index, /*timeout: new Date(event.timestamp),*/ body }, (err,res,status)=>{
+    es.index({ index,body }, (err,res,status)=>{
         if(err) return cb(err);
         console.log(res.statusCode);
         cb();

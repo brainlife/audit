@@ -35,18 +35,24 @@ console.log("connecting to amqp");
 amqplib.connect(config.amqp).then(conn=>{
     conn.createChannel().then(ch=>{
         console.log("connected to amqp. now setting up audit queue");
+
         ch.assertQueue("audit");
+	//           queue    source-ex    pattern
         ch.bindQueue("audit", "warehouse", "#");
         ch.bindQueue("audit", "amaretti", "#");
         ch.bindQueue("audit", "auth", "#");
-        //ch.bindQueue("audit", "auth", "user.create.*");
-        //ch.bindQueue("audit", "auth", "user.login.*");
-        //ch.bindQueue("audit", "auth", "user.setpass.*");
-        //ch.bindQueue("audit", "auth", "user.setpass_fail.*");
+
+        ch.assertExchange("audit", "topic");
+        ch.assertQueue("audit-fail");
+        ch.bindQueue("audit-fail", "audit", "fail.*");
+
         ch.consume("audit", msg=>{
             handleMessage(msg, err=>{
-                if(err) console.error(err);
-                else ch.ack(msg);
+                if(err) {
+		    console.error(JSON.stringify(err, null, 4));
+		    ch.publish("audit", "fail.audit", Buffer.from(JSON.stringify(msg))); //publish to failed queue
+		    ch.ack(msg);
+		} else ch.ack(msg);
             });
         }); //, {noAck: true});
         /*
@@ -107,6 +113,7 @@ function handleMessage(msg, cb) {
         }
         if(routingKey.startsWith("user.create.")) {
             type = "user.create";
+	    //body._profile = JSON.stringify(body._profile); //this might be kill the audit logging?
             body.sub = tokens[2];
         }
         if(routingKey.startsWith("user.update.")) {
@@ -210,7 +217,13 @@ function handleMessage(msg, cb) {
 
     let index = "audit."+exchange+"."+type;
     console.log(index);
-    console.dir(body);
+    console.dir(JSON.stringify(body, null, 4));
+
+    //Field [_id] is a metadata field and cannot be added inside a document.
+    if(body._id) {
+        body.mongo_id = body._id;
+        delete body._id;
+    }
     es.index({ index,body }, (err,res,status)=>{
         if(err) return cb(err);
         console.log(res.statusCode);

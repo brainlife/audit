@@ -50,7 +50,8 @@ amqplib.connect(config.amqp).then(conn=>{
             handleMessage(msg, err=>{
                 if(err) {
 		    console.error(JSON.stringify(err, null, 4));
-		    ch.publish("audit", "fail.audit", Buffer.from(JSON.stringify(msg))); //publish to failed queue
+		    //TODO - I don't think this works?
+		    ch.publish("audit", "fail."+msg.fields.routingKey, msg.content); //publish to failed queue
 		    ch.ack(msg);
 		} else ch.ack(msg);
             });
@@ -130,10 +131,16 @@ function handleMessage(msg, cb) {
         }
         if(routingKey.startsWith("group.create.")) {
             type = "group.create";
+	    //unpopulate admins / members to subs so that ES won't balk
+	    body.admins = body.admins.map(m=>m.sub||m);
+	    body.members = body.members.map(m=>m.sub||m);
             body.group = tokens[2];
         }
         if(routingKey.startsWith("group.update.")) {
             type = "group.update";
+	    //unpopulate admins / members to subs so that ES won't balk
+	    body.admins = body.admins.map(m=>m.sub||m);
+	    body.members = body.members.map(m=>m.sub||m);
             body.group = tokens[2];
         }
         if(routingKey.startsWith("user.login_fail")) {

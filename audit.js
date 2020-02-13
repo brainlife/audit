@@ -162,6 +162,12 @@ function handleMessage(msg, cb) {
             body.project = tokens[3];
             body.dataset = tokens[4];
         }
+        if(routingKey.startsWith("dataset.update.")) {
+            type = "dataset.update";
+            body.sub = tokens[2];
+            body.project = tokens[3];
+            body.dataset = tokens[4];
+        }
     }
 
     if(exchange == "amaretti") {

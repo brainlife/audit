@@ -1,15 +1,16 @@
 {
   "name": "audit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "config.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "deploy": "ssh -t test.brainlife.io sudo \"sudo /root/docker/audit/update.sh\"",
+    "deploy-prod": "ssh -t brainlife.io sudo \"sudo /root/docker/audit/update.sh\""
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@elastic/elasticsearch": "^7.3.0",
+    "@elastic/elasticsearch": "^7.6.0",
     "amqplib": "^0.5.5",
     "express": "^4.17.1"
   }

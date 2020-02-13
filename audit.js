@@ -131,16 +131,16 @@ function handleMessage(msg, cb) {
         }
         if(routingKey.startsWith("group.create.")) {
             type = "group.create";
-	    //unpopulate admins / members to subs so that ES won't balk
-	    body.admins = body.admins.map(m=>m.sub||m);
-	    body.members = body.members.map(m=>m.sub||m);
+            //unpopulate admins / members to subs so that ES won't balk
+            body.admins = body.admins.map(m=>m.sub||m);
+            body.members = body.members.map(m=>m.sub||m);
             body.group = tokens[2];
         }
         if(routingKey.startsWith("group.update.")) {
             type = "group.update";
-	    //unpopulate admins / members to subs so that ES won't balk
-	    body.admins = body.admins.map(m=>m.sub||m);
-	    body.members = body.members.map(m=>m.sub||m);
+            //unpopulate admins / members to subs so that ES won't balk
+            body.admins = body.admins.map(m=>m.sub||m);
+            body.members = body.members.map(m=>m.sub||m);
             body.group = tokens[2];
         }
         if(routingKey.startsWith("user.login_fail")) {
@@ -167,6 +167,31 @@ function handleMessage(msg, cb) {
             body.sub = tokens[2];
             body.project = tokens[3];
             body.dataset = tokens[4];
+
+            //slim down the event
+            delete body.prov;
+            delete body.product;
+        }
+        if(routingKey.startsWith("rule.create.")) {
+            type = "rule.create";
+            body.project = tokens[2];
+            body.rule = tokens[3];
+        }
+        if(routingKey.startsWith("rule.update.")) {
+            type = "rule.update";
+            body.project = tokens[2];
+            body.rule = tokens[3];
+        }
+        if(routingKey.startsWith("project.create.")) {
+            type = "project.create";
+            body.project = tokens[2];
+        }
+        if(routingKey.startsWith("project.update.")) {
+            type = "project.update";
+            body.project = tokens[2];
+            
+            //slim down the event
+            delete body.stats;
         }
     }
 
@@ -221,6 +246,7 @@ function handleMessage(msg, cb) {
             body.task = tokens[5];
         }
     }
+
     body.timestamp = new Date(event.timestamp*1000);
 
     if(!type) {

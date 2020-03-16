@@ -174,21 +174,25 @@ function handleMessage(msg, cb) {
         }
         if(routingKey.startsWith("rule.create.")) {
             type = "rule.create";
-            body.project = tokens[2];
-            body.rule = tokens[3];
+            body.sub = tokens[2];
+            body.project = tokens[3];
+            body.rule = tokens[4];
         }
         if(routingKey.startsWith("rule.update.")) {
             type = "rule.update";
-            body.project = tokens[2];
-            body.rule = tokens[3];
+            body.sub = tokens[2];
+            body.project = tokens[3];
+            body.rule = tokens[4];
         }
         if(routingKey.startsWith("project.create.")) {
             type = "project.create";
-            body.project = tokens[2];
+            body.sub = tokens[2];
+            body.project = tokens[3];
         }
         if(routingKey.startsWith("project.update.")) {
             type = "project.update";
-            body.project = tokens[2];
+            body.sub = tokens[2];
+            body.project = tokens[3];
             
             //slim down the event
             delete body.stats;

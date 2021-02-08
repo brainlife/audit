@@ -16,21 +16,6 @@ app.listen(config.express.port, () => console.log(`audit api listening!`))
 console.log("connecting to elasticsearch");
 const es = new elasticsearch.Client(config.elasticsearch);
 
-/*
-es.indices.exists({
-    index: "audit",
-}, (err,res,status)=>{
-    if(res.body) return;
-    console.log("creating audit index");
-    es.indices.create({
-        index: 'audit',
-     }, (err, res, status)=>{
-        if(err) return console.error(err);
-        console.log("created audit index", res);
-    })
-})
-*/
-
 console.log("connecting to amqp");
 amqplib.connect(config.amqp).then(conn=>{
     conn.createChannel().then(ch=>{
@@ -55,11 +40,7 @@ amqplib.connect(config.amqp).then(conn=>{
 		    ch.ack(msg);
 		} else ch.ack(msg);
             });
-        }); //, {noAck: true});
-        /*
-        conn.queue("audit", q=>{
-        });
-        */
+        }); 
     });
 });
 
@@ -100,7 +81,6 @@ function handleMessage(msg, cb) {
   timestamp: 1565747601.752 }
     */
     console.log("............", exchange, routingKey);
-    //console.dir(event);
 
     let body = event;
 
@@ -259,8 +239,8 @@ function handleMessage(msg, cb) {
     }
 
     let index = "audit."+exchange+"."+type;
-    console.log(index);
-    console.dir(JSON.stringify(body, null, 4));
+    //console.log(index);
+    //console.dir(JSON.stringify(body, null, 4));
 
     //Field [_id] is a metadata field and cannot be added inside a document.
     if(body._id) {

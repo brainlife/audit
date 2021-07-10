@@ -22,7 +22,7 @@ amqplib.connect(config.amqp).then(conn=>{
         console.log("connected to amqp. now setting up audit queue");
 
         ch.assertQueue("audit");
-	//           queue    source-ex    pattern
+        //           queue    source-ex    pattern
         ch.bindQueue("audit", "warehouse", "#");
         ch.bindQueue("audit", "amaretti", "#");
         ch.bindQueue("audit", "auth", "#");
@@ -34,55 +34,27 @@ amqplib.connect(config.amqp).then(conn=>{
         ch.consume("audit", msg=>{
             handleMessage(msg, err=>{
                 if(err) {
-		    console.error(JSON.stringify(err, null, 4));
-		    //TODO - I don't think this works?
-		    ch.publish("audit", "fail."+msg.fields.routingKey, msg.content); //publish to failed queue
-		    ch.ack(msg);
-		} else ch.ack(msg);
+                    console.error(JSON.stringify(err, null, 4));
+                    //TODO - I don't think this works?
+                    ch.publish("audit", "fail."+msg.fields.routingKey, msg.content); //publish to failed queue
+                    ch.ack(msg);
+                } else ch.ack(msg);
             });
         }); 
     });
 });
 
 function handleMessage(msg, cb) {
-/*
-{ fields:
-   { consumerTag: 'amq.ctag--uzYGUm7InaitXpPfa3wQA',
-     deliveryTag: 1,
-     redelivered: false,
-     exchange: 'auth',
-     routingKey: 'user.login.1' },
-
-*/
     let event = JSON.parse(msg.content.toString());
     let exchange = msg.fields.exchange;
     let routingKey = msg.fields.routingKey;
-    /*
-{ type: 'github',
-  username: 'hayashis',
-  exp: 1566352401.746,
-  headers:
-   { host: 'dev1.soichi.us',
-     'x-real-ip': '45.16.200.251',
-     'x-forwarded-for': '45.16.200.251',
-     'x-forwarded-proto': 'https',
-     connection: 'close',
-     'upgrade-insecure-requests': '1',
-     'user-agent':
-      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-     'sec-fetch-mode': 'navigate',
-     'sec-fetch-user': '?1',
-     accept:
-      'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,'
-     'sec-fetch-site': 'cross-site',
-     referer: 'https://dev1.soichi.us/auth/',
-     'accept-encoding': 'gzip, deflate, br',
-     'accept-language': 'en-US,en;q=0.9,ja-JP;q=0.8,ja;q=0.7' },
-  timestamp: 1565747601.752 }
-    */
-    console.log("............", exchange, routingKey);
 
-    let body = event;
+    //we can't just whatever in the mongo collection to elasticsearch 
+    //it will lead to "java.lang.IllegalArgumentException: Limit of total fields [1000] in index [audit.warehouse.rule.update] has been exceeded"
+    //let body = event; 
+
+    let body = {}; //start out empty, and only add things that we really need indexed in the elasticsearch
+    console.dir(event);
 
     //parse exchange/routingKey
     let tokens = routingKey.split(".");
@@ -94,7 +66,6 @@ function handleMessage(msg, cb) {
         }
         if(routingKey.startsWith("user.create.")) {
             type = "user.create";
-	    //body._profile = JSON.stringify(body._profile); //this might be kill the audit logging?
             body.sub = tokens[2];
         }
         if(routingKey.startsWith("user.update.")) {
@@ -147,10 +118,6 @@ function handleMessage(msg, cb) {
             body.sub = tokens[2];
             body.project = tokens[3];
             body.dataset = tokens[4];
-
-            //slim down the event
-            delete body.prov;
-            delete body.product;
         }
         if(routingKey.startsWith("rule.create.")) {
             type = "rule.create";
@@ -173,9 +140,12 @@ function handleMessage(msg, cb) {
             type = "project.update";
             body.sub = tokens[2];
             body.project = tokens[3];
-            
-            //slim down the event
-            delete body.stats;
+        }
+        if(routingKey.startsWith("datalad.import.")) {
+            type = "datalad.import";
+            body.sub = tokens[2];
+            body.project = tokens[3];
+            body.dldataset = tokens[4];
         }
     }
 
@@ -239,19 +209,16 @@ function handleMessage(msg, cb) {
     }
 
     let index = "audit."+exchange+"."+type;
-    //console.log(index);
-    //console.dir(JSON.stringify(body, null, 4));
 
     //Field [_id] is a metadata field and cannot be added inside a document.
     if(body._id) {
         body.mongo_id = body._id;
         delete body._id;
     }
-    es.index({ index,body }, (err,res,status)=>{
+    es.index({ index,body }, (err,res)=>{
         if(err) return cb(err);
-        console.log(res.statusCode);
+        console.log(res.statusCode, exchange, routingKey);
         cb();
     });
 }
-
 

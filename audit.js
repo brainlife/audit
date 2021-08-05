@@ -7,11 +7,12 @@ const config = require('./config');
 const amqplib = require('amqplib');
 const elasticsearch = require('@elastic/elasticsearch');
 
+//start health api..
 const app = express();
 app.get('/health', (req, res) => {
     res.json({status: "ok"});
 })
-app.listen(config.express.port, () => console.log(`audit api listening!`))
+const server = app.listen(config.express.port, () => console.log(`audit api listening!`))
 
 console.log("connecting to elasticsearch");
 const es = new elasticsearch.Client(config.elasticsearch);
@@ -39,9 +40,18 @@ amqplib.connect(config.amqp).then(conn=>{
                     ch.publish("audit", "fail."+msg.fields.routingKey, msg.content); //publish to failed queue
                     ch.ack(msg);
                 } else ch.ack(msg);
+
             });
         }); 
     });
+
+    //elasticsearch connection piles up for some reason.. let's restart every once a while
+    setTimeout(()=>{
+        console.log("timeout.. closing");
+        es.close();
+        server.close();
+        conn.close();
+    }, 1000*3600);
 });
 
 function handleMessage(msg, cb) {
@@ -83,15 +93,15 @@ function handleMessage(msg, cb) {
         if(routingKey.startsWith("group.create.")) {
             type = "group.create";
             //unpopulate admins / members to subs so that ES won't balk
-            body.admins = body.admins.map(m=>m.sub||m);
-            body.members = body.members.map(m=>m.sub||m);
+            body.admins = event.admins.map(m=>m.sub||m);
+            body.members = event.members.map(m=>m.sub||m);
             body.group = tokens[2];
         }
         if(routingKey.startsWith("group.update.")) {
             type = "group.update";
             //unpopulate admins / members to subs so that ES won't balk
-            body.admins = body.admins.map(m=>m.sub||m);
-            body.members = body.members.map(m=>m.sub||m);
+            body.admins = event.admins.map(m=>m.sub||m);
+            body.members = event.members.map(m=>m.sub||m);
             body.group = tokens[2];
         }
         if(routingKey.startsWith("user.login_fail")) {

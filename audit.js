@@ -17,6 +17,10 @@ const server = app.listen(config.express.port, () => console.log(`audit api list
 console.log("connecting to elasticsearch");
 const es = new elasticsearch.Client(config.elasticsearch);
 
+setInterval(()=>{
+    es.info(console.log);
+}, 1000*60);
+
 console.log("connecting to amqp");
 amqplib.connect(config.amqp).then(conn=>{
     conn.createChannel().then(ch=>{

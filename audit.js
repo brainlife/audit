@@ -216,7 +216,7 @@ function handleMessage(msg, cb) {
             body.instance = tokens[4];
             body.task = tokens[5];
 
-            body.fullpath = event.fullpath;
+            body.path = event.fullpath;
             body.resource_id = event.resource_id;
             body.resource_name = event.resource_name;
         }
@@ -226,6 +226,10 @@ function handleMessage(msg, cb) {
             body.sub = tokens[3];
             body.instance = tokens[4];
             body.task = tokens[5];
+
+            body.path = event.fullpath;
+            body.resource_id = event.resource_id;
+            body.resource_name = event.resource_name;
         }
         if(routingKey.startsWith("task.upload.")) {
             type = "task.upload";

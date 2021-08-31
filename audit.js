@@ -183,6 +183,9 @@ function handleMessage(msg, cb) {
             body.sub = tokens[3];
             body.instance = tokens[4];
             body.task = tokens[5];
+
+            body.service = event.service;
+            body.service_branch = event.service_branch;
         }
         if(routingKey.startsWith("task.rerun.")) {
             type = "task.rerun";
@@ -211,6 +214,10 @@ function handleMessage(msg, cb) {
             body.sub = tokens[3];
             body.instance = tokens[4];
             body.task = tokens[5];
+
+            body.fullpath = event.fullpath;
+            body.resource_id = event.resource_id;
+            body.resource_name = event.resource_name;
         }
         if(routingKey.startsWith("task.download.")) {
             type = "task.download";
@@ -225,6 +232,8 @@ function handleMessage(msg, cb) {
             body.sub = tokens[3];
             body.instance = tokens[4];
             body.task = tokens[5];
+
+            body.path = event.path;
         }
     }
 

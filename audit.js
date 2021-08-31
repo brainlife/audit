@@ -4,7 +4,7 @@
 
 const express = require('express');
 const config = require('./config');
-const amqplib = require('amqplib');
+const amqp = require('amqp-connection-manager');
 const elasticsearch = require('@elastic/elasticsearch');
 
 //start health api..
@@ -22,11 +22,13 @@ setInterval(()=>{
 }, 1000*60);
 
 console.log("connecting to amqp");
-amqplib.connect(config.amqp).then(conn=>{
-    conn.createChannel().then(ch=>{
+const conn = amqp.connect([config.amqp]);
+const ch = conn.createChannel({
+    json: true,
+    setup: (ch)=>{
         console.log("connected to amqp. now setting up audit queue");
-
         ch.assertQueue("audit");
+        
         //           queue    source-ex    pattern
         ch.bindQueue("audit", "warehouse", "#");
         ch.bindQueue("audit", "amaretti", "#");
@@ -35,28 +37,30 @@ amqplib.connect(config.amqp).then(conn=>{
         ch.assertExchange("audit", "topic");
         ch.assertQueue("audit-fail");
         ch.bindQueue("audit-fail", "audit", "fail.*");
-
         ch.consume("audit", msg=>{
             handleMessage(msg, err=>{
                 if(err) {
                     console.error(JSON.stringify(err, null, 4));
+                    
                     //TODO - I don't think this works?
                     ch.publish("audit", "fail."+msg.fields.routingKey, msg.content); //publish to failed queue
                     ch.ack(msg);
                 } else ch.ack(msg);
 
             });
-        }); 
-    });
-
-    //elasticsearch connection piles up for some reason.. let's restart every once a while
-    setTimeout(()=>{
-        console.log("timeout.. closing");
-        es.close();
-        server.close();
-        conn.close();
-    }, 1000*3600);
+        });
+    },
 });
+
+console.log("consuming..");
+
+//TODO - elasticsearch connection piles up for some reason.. let's restart every once a while
+setTimeout(()=>{
+    console.log("timeout.. closing");
+    es.close();
+    server.close();
+    connection.close();
+}, 1000*60);
 
 function handleMessage(msg, cb) {
     let event = JSON.parse(msg.content.toString());

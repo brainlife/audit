@@ -7,6 +7,8 @@ const config = require('./config');
 const amqp = require('amqp-connection-manager');
 const elasticsearch = require('@elastic/elasticsearch');
 
+console.log("starging audit service");
+
 //start health api..
 const app = express();
 app.get('/health', (req, res) => {
@@ -17,9 +19,11 @@ const server = app.listen(config.express.port, () => console.log(`audit api list
 console.log("connecting to elasticsearch");
 const es = new elasticsearch.Client(config.elasticsearch);
 
+/* makes it impossible to terminate
 setInterval(()=>{
     es.info(console.log);
 }, 1000*60);
+*/
 
 console.log("connecting to amqp");
 const conn = amqp.connect([config.amqp]);
@@ -56,11 +60,11 @@ console.log("consuming..");
 
 //TODO - elasticsearch connection piles up for some reason.. let's restart every once a while
 setTimeout(()=>{
-    console.log("timeout.. closing");
+    console.log("timeout.. closing to clen up elasticsearch connections");
+    conn.close();
     es.close();
     server.close();
-    conn.close();
-}, 1000*60);
+}, 1000*600);
 
 function handleMessage(msg, cb) {
     let event = JSON.parse(msg.content.toString());

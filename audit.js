@@ -230,7 +230,7 @@ function handleMessage(msg, cb) {
 
     body.timestamp = new Date(event.timestamp*1000);
 
-    console.log(res.statusCode, exchange, routingKey, type);
+    console.log(exchange, routingKey, type);
     console.dir(event);
 
     if(!type) {
@@ -247,6 +247,7 @@ function handleMessage(msg, cb) {
     }
     es.index({ index,body }, (err,res)=>{
         if(err) return cb(err);
+        console.log(res.statusCode, index);
         cb();
     });
 }

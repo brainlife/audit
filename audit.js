@@ -59,7 +59,7 @@ setTimeout(()=>{
     console.log("timeout.. closing");
     es.close();
     server.close();
-    connection.close();
+    conn.close();
 }, 1000*60);
 
 function handleMessage(msg, cb) {

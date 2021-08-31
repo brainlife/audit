@@ -4,6 +4,7 @@
   "description": "",
   "main": "config.js",
   "scripts": {
+    "deploy": "ssh -t hayashis@test.brainlife.io sudo \"sudo /root/docker/audit/update.sh\"",
     "deploy-prod": "ssh -t root@monitor.brainlife.io sudo \"sudo /root/docker/audit/update.sh\""
   },
   "author": "",

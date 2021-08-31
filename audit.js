@@ -76,7 +76,6 @@ function handleMessage(msg, cb) {
     //let body = event; 
 
     let body = {}; //start out empty, and only add things that we really need indexed in the elasticsearch
-    //console.dir(event);
 
     //parse exchange/routingKey
     let tokens = routingKey.split(".");
@@ -169,6 +168,12 @@ function handleMessage(msg, cb) {
             body.project = tokens[3];
             body.dldataset = tokens[4];
         }
+        if(routingKey.startsWith("secondary.download.")) {
+            type = "secondary.download";
+            body.sub = tokens[2];
+            body.group = tokens[3]; 
+            body.task = tokens[4];
+        }
     }
 
     if(exchange == "amaretti") {
@@ -227,7 +232,9 @@ function handleMessage(msg, cb) {
 
     if(!type) {
         console.error("unknown exchange/routingKey.. ignoring");
-        console.dir(msg);
+        console.dir(exchange);
+        console.dir(routingKey);
+        console.dir(event);
         return cb();
     }
 

@@ -230,11 +230,11 @@ function handleMessage(msg, cb) {
 
     body.timestamp = new Date(event.timestamp*1000);
 
+    console.log(res.statusCode, exchange, routingKey, type);
+    console.dir(event);
+
     if(!type) {
         console.error("unknown exchange/routingKey.. ignoring");
-        console.dir(exchange);
-        console.dir(routingKey);
-        console.dir(event);
         return cb();
     }
 
@@ -247,7 +247,6 @@ function handleMessage(msg, cb) {
     }
     es.index({ index,body }, (err,res)=>{
         if(err) return cb(err);
-        console.log(res.statusCode, exchange, routingKey);
         cb();
     });
 }

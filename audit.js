@@ -173,6 +173,7 @@ function handleMessage(msg, cb) {
             body.sub = tokens[2];
             body.group = tokens[3]; 
             body.task = tokens[4];
+            body.path = event.path;
         }
     }
 
@@ -232,14 +233,14 @@ function handleMessage(msg, cb) {
             body.sub = tokens[3];
             body.instance = tokens[4];
             body.task = tokens[5];
-
-            body.path = event.path;
         }
     }
 
     body.timestamp = new Date(event.timestamp*1000);
 
-    console.log(exchange, routingKey, type);
+    console.log("----------------------", exchange, routingKey, type);
+    delete event.headers; //too big to in log
+    delete event.timestamp;
     console.dir(event);
 
     if(!type) {
@@ -256,7 +257,9 @@ function handleMessage(msg, cb) {
     }
     es.index({ index,body }, (err,res)=>{
         if(err) return cb(err);
+        console.log("-- sent to es --");
         console.log(res.statusCode, index);
+        console.dir(body);
         cb();
     });
 }

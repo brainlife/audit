@@ -76,7 +76,7 @@ function handleMessage(msg, cb) {
     //let body = event; 
 
     let body = {}; //start out empty, and only add things that we really need indexed in the elasticsearch
-    console.dir(event);
+    //console.dir(event);
 
     //parse exchange/routingKey
     let tokens = routingKey.split(".");
@@ -227,6 +227,7 @@ function handleMessage(msg, cb) {
 
     if(!type) {
         console.error("unknown exchange/routingKey.. ignoring");
+        console.dir(msg);
         return cb();
     }
 
